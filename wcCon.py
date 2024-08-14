@@ -7,11 +7,6 @@ from tkinter import filedialog, messagebox
 import re
 from datetime import datetime
 from dateutil import parser
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 nameFile = pd.DataFrame()
 nameCheckComplete = False
@@ -138,9 +133,6 @@ def patronMaster():
 
         manualButton = tk.Button(promptWindow, text="Manual File Load", command=manualPatronFile)
         manualButton.pack(pady=10, padx=10)
-
-        webScrapingButton = tk.Button(promptWindow, text="Search World Check", command=webScraping)
-        webScrapingButton.pack(pady=10, padx=10)
 
         sqlButton = tk.Button(promptWindow, text="SQL Operation", command=sqlPatronFile) 
         sqlButton.pack(pady=10, padx=10)
@@ -386,68 +378,6 @@ def sqlPatronFile():
             messagebox.showinfo("", "No matches found between patron records and world check results.")
     else:
         messagebox.showinfo("", "No Patron records found in the database.")
-
-def webScraping():
-    global nameFile
-
-    username, password = get_credentials()
-    if not username or not password:
-        messagebox.showerror("Error", "Username or Password not provided.")
-        return
-
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--log-level=0')  # Enable verbose logging
-
-    driver = webdriver.Chrome(options=options)
-
-    try:
-        driver.get("??????") # Site hidden for security
-
-        # Wait for the username input and enter the username
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.NAME, "User ID"))).send_keys(username)
-        driver.find_element(By.NAME, "password").send_keys(password)
-        driver.find_element(By.NAME, "password").send_keys(Keys.RETURN)
-
-        # Ensure we are logged in by waiting for a known element on the dashboard
-        first_name = nameFile['names'].iloc[0]
-
-        # Wait for the name input field
-        name_input = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.NAME, "name")))
-        name_input.clear()
-        name_input.send_keys(first_name)
-        
-        # Click the Search button
-        search_button = WebDriverWait(driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[text()='Search']"))
-        )
-        search_button.click()
-
-        # Wait for the Export button and click it
-        export_button = WebDriverWait(driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Export')]"))
-        )
-        driver.execute_script("arguments[0].click();", export_button)
-
-        # Confirm the export
-        confirm_export_button = WebDriverWait(driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Export') and not(contains(text(),'Hover'))]"))
-        )
-        driver.execute_script("arguments[0].click();", confirm_export_button)
-
-        # Click the Back to Screening button
-        back_to_screening_button = WebDriverWait(driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Back to Screening')]"))
-        )
-        driver.execute_script("arguments[0].click();", back_to_screening_button)
-
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {e}")
-    finally:
-        driver.quit()
 
 root = tk.Tk()
 root.title("World Check Patron Consolidator")
